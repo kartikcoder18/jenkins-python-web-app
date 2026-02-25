@@ -6,5 +6,5 @@ app = Flask(_name_)
 def home():
     return "Hello from NEW Python Web App via Jenkins & Docker!"
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
