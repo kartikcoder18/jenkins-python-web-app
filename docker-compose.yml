@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  webapp:
+    build: .
+    container_name: python-web-app
+    ports:
+      - "8091:5000"
