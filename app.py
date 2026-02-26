@@ -1,7 +1,7 @@
 from flask import Flask
 
 app = Flask(__name__)
-
+AWS_SECRET_KEY="HHHHHHH"
 @app.route("/")
 def home():
     return "Hello from nnew Python Web App via Jenkins & Docker!"
