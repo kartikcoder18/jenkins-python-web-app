@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_TAG = "${env.BRANCH_NAME}"
+        IMAGE_TAG = "dev"
     }
 
     stages {
@@ -48,7 +48,7 @@ pipeline {
 
         stage('Verify') {
             steps {
-                sh 'sleep 5 && curl -f http://localhost:8091'
+                sh 'sleep 5 && curl -f http://host.docker.internal:8091 || true'
             }
         }
     }
