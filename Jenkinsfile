@@ -42,3 +42,14 @@ pipeline {
                       --name python-web-app \
                       -p 8091:5000 \
                       pythonwebapp:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh 'sleep 5 && curl -f http://localhost:8091'
+            }
+        }
+    }
+}
