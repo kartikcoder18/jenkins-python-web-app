@@ -3,7 +3,7 @@ from flask import Flask
 app = Flask(__name__)
 @app.route("/")
 def home():
-    return "Hello newes k Python Web App via Jenkins & Docker!"
+    return "Hello newest k Python Web App via Jenkins & Docker!"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
