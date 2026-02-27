@@ -48,7 +48,7 @@ pipeline {
 
         stage('Verify') {
             steps {
-                sh 'sleep 5 && curl -f http://host.docker.internal:8091 || true'
+                sh 'sleep 5 && curl -f http://13.126.134.254:8091 || true'
             }
         }
     }
