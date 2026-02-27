@@ -32,8 +32,9 @@ pipeline {
             steps {
                 sh '''
                     echo "Running strict secret scan..."
-
-                    if grep -r -iE "AWS_ACCESS_KEY|AWS_SECRET|password|secret" .; then
+                    if grep -r -iE "AWS_ACCESS_KEY|AWS_SECRET|password|secret" . \
+                        --exclude=Jenkinsfile \
+                        --exclude-dir=.git; then
                         echo "Secret detected! Failing pipeline."
                         exit 1
                     else
