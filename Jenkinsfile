@@ -1,32 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_TAG = "${env.BRANCH_NAME}"
+    }
+
     stages {
-
-        stage('Select Branch') {
-            steps {
-                script {
-                    def userBranch = input(
-                        message: 'Enter Branch Name to Build',
-                        parameters: [
-                            string(
-                                name: 'BRANCH_NAME',
-                                defaultValue: 'main'
-                            )
-                        ]
-                    )
-                    env.BRANCH_NAME = userBranch
-                    env.IMAGE_TAG = userBranch
-                }
-            }
-        }
-
-        stage('Clone Code') {
-            steps {
-                git branch: "${env.BRANCH_NAME}",
-                    url: 'https://github.com/kartikcoder18/jenkins-python-web-app.git'
-            }
-        }
 
         stage('GitSecOps - Strict Secret Check') {
             steps {
@@ -46,30 +25,20 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                sh "docker build -t pythonwebapp:${env.IMAGE_TAG} ."
+                sh "docker build -t pythonwebapp:${IMAGE_TAG} ."
             }
         }
 
-        stage('Stop Old Container (Compose Down)') {
+        stage('Stop Old Container') {
             steps {
-                sh 'docker compose down || true'
+                sh 'docker rm -f python-web-app || true'
             }
         }
 
-        stage('Deploy With Compose') {
+        stage('Run Container') {
             steps {
                 sh '''
-                    export IMAGE_TAG=${IMAGE_TAG}
-                    docker compose up -d --build
-                '''
-            }
-        }
-
-        stage('Verify') {
-            steps {
-                sh 'sleep 5 && curl -f http://localhost:8091'
-            }
-        }
-
-    }
-}
+                    docker run -d \
+                      --name python-web-app \
+                      -p 8091:5000 \
+                      pythonwebapp:${IMAGE_TAG}
