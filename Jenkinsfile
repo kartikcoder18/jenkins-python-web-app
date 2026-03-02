@@ -4,6 +4,7 @@ pipeline {
     environment {
         SERVER_IP = "13.126.134.254"
         APP_DIR   = "/home/ubuntu/jenkins-python-web-app"
+        IMAGE_TAG = "latest"
     }
 
     stages {
@@ -18,7 +19,8 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} 'cd ${APP_DIR} && docker build -t pythonwebapp:latest .'
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} \
+                    'cd ${APP_DIR} && docker build -t pythonwebapp:${IMAGE_TAG} .'
                     """
                 }
             }
@@ -28,7 +30,19 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} 'cd ${APP_DIR} && docker-compose down && docker-compose up -d'
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} \
+                    'cd ${APP_DIR} && IMAGE_TAG=${IMAGE_TAG} docker-compose down && IMAGE_TAG=${IMAGE_TAG} docker-compose up -d'
+                    """
+                }
+            }
+        }
+
+        stage('Show Running Containers On EC2') {
+            steps {
+                sshagent(['ec2-ssh-key']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} \
+                    'docker ps'
                     """
                 }
             }
@@ -76,6 +90,10 @@ ${env.BUILD_URL}console
 """,
                 attachLog: true
             )
+        }
+
+        always {
+            echo "Pipeline Finished."
         }
     }
 }
