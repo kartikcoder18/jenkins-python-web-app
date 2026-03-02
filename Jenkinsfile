@@ -33,14 +33,14 @@ pipeline {
             steps {
                 sh '''
                     export IMAGE_TAG=${IMAGE_TAG}
-                    docker compose up -d --build --force-recreate
+                    docker-compose up -d --build --force-recreate
                 '''
             }
         }
 
         stage('Verify') {
             steps {
-                sh 'sleep 5 && curl -f http://localhost:8091'
+                sh 'sleep 5 && curl -f http://13.126.134.254:8091'
             }
         }
     }
