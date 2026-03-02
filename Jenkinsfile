@@ -29,12 +29,6 @@ pipeline {
             }
         }
 
-        stage('Stop Old Container') {
-            steps {
-                sh 'docker rm -f python-web-app || true'
-            }
-        }
-
         stage('Run Container') {
             steps {
                 sh '''
