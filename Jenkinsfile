@@ -2,48 +2,83 @@ pipeline {
     agent any
 
     environment {
-        SERVER_IP = "13.126.134.254"
+        SERVER_IP   = "13.126.134.254"
+        SERVER_USER = "ubuntu"
+        APP_DIR     = "/home/ubuntu/jenkins-python-web-app"
+        BRANCH      = "dev/kartik"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout Source Code') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Show Docker Images Before Build') {
+        stage('Test SSH Connection') {
             steps {
-                sh 'docker images'
+                sh """
+                ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} "echo SSH Connection Successful"
+                """
+            }
+        }
+
+        stage('Pull Latest Code on EC2') {
+            steps {
+                sh """
+                ssh ${SERVER_USER}@${SERVER_IP} '
+                    cd ${APP_DIR} &&
+                    git pull origin ${BRANCH}
+                '
+                """
             }
         }
 
         stage('Stop Existing Containers') {
             steps {
-                sh 'docker-compose down || true'
+                sh """
+                ssh ${SERVER_USER}@${SERVER_IP} '
+                    cd ${APP_DIR} &&
+                    docker-compose down || true
+                '
+                """
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Docker Image Using Compose') {
             steps {
-                sh 'docker-compose build'
+                sh """
+                ssh ${SERVER_USER}@${SERVER_IP} '
+                    cd ${APP_DIR} &&
+                    docker-compose build
+                '
+                """
             }
         }
 
         stage('Start Containers') {
             steps {
-                sh 'docker-compose up -d'
+                sh """
+                ssh ${SERVER_USER}@${SERVER_IP} '
+                    cd ${APP_DIR} &&
+                    docker-compose up -d
+                '
+                """
             }
         }
 
-        stage('Show Running Containers') {
+        stage('Verify Running Containers') {
             steps {
-                sh 'docker ps'
+                sh """
+                ssh ${SERVER_USER}@${SERVER_IP} '
+                    docker ps
+                '
+                """
             }
         }
 
-        stage('Verify Deployment') {
+        stage('Verify Application Deployment') {
             steps {
                 sh """
                     sleep 10
