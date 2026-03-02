@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_TAG = "${env.BRANCH_NAME}"
+        IMAGE_TAG = "dev"
     }
 
     stages {
@@ -29,20 +29,18 @@ pipeline {
             }
         }
 
-        stage('Run Container') {
+        stage('Deploy') {
             steps {
                 sh '''
-                    docker run -d \
-                      --name python-web-app \
-                      -p 8091:5000 \
-                      pythonwebapp:${IMAGE_TAG}
+                    export IMAGE_TAG=${IMAGE_TAG}
+                    docker compose up -d --build --force-recreate
                 '''
             }
         }
 
         stage('Verify') {
             steps {
-                sh 'sleep 5 && curl -f http://13.126.134.254:8091'
+                sh 'sleep 5 && curl -f http://localhost:8091'
             }
         }
     }
@@ -51,15 +49,17 @@ pipeline {
         success {
             emailext(
                 to: 'kartik.18901890@gmail.com',
-                subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Build Successful!\n\n${env.BUILD_URL}"
+                subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Build Successful!\n\n${env.BUILD_URL}",
+                attachLog: true
             )
         }
         failure {
             emailext(
                 to: 'kartik.18901890@gmail.com',
-                subject: "❌ FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Build Failed!\n\n${env.BUILD_URL}"
+                subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Build Failed!\n\n${env.BUILD_URL}",
+                attachLog: true
             )
         }
     }
