@@ -2,9 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "pythonwebapp"
-        IMAGE_TAG  = "dev"
-        SERVER_IP  = "13.126.134.254"
+        SERVER_IP = "13.126.134.254"
     }
 
     stages {
@@ -21,27 +19,27 @@ pipeline {
             }
         }
 
+        stage('Stop Existing Containers') {
+            steps {
+                sh 'docker-compose down || true'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                sh 'docker-compose build'
             }
         }
 
-        stage('Show Docker Images After Build') {
-            steps {
-                sh 'docker images'
-            }
-        }
-
-        stage('Stop Old Container') {
-            steps {
-                sh 'docker-compose down'
-            }
-        }
-
-        stage('Start New Container') {
+        stage('Start Containers') {
             steps {
                 sh 'docker-compose up -d'
+            }
+        }
+
+        stage('Show Running Containers') {
+            steps {
+                sh 'docker ps'
             }
         }
 
