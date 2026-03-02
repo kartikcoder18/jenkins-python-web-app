@@ -35,13 +35,13 @@ pipeline {
 
         stage('Stop Old Container') {
             steps {
-                sh 'docker compose down'
+                sh 'docker-compose down'
             }
         }
 
         stage('Start New Container') {
             steps {
-                sh 'docker compose up -d'
+                sh 'docker-compose up -d'
             }
         }
 
