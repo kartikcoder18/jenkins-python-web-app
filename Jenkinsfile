@@ -18,10 +18,7 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} "
-                        cd ${APP_DIR} &&
-                        docker build -t pythonwebapp:latest .
-                    "
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} 'cd ${APP_DIR} && docker build -t pythonwebapp:latest .'
                     """
                 }
             }
@@ -31,11 +28,7 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} "
-                        cd ${APP_DIR} &&
-                        docker-compose down &&
-                        docker-compose up -d
-                    "
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} 'cd ${APP_DIR} && docker-compose down && docker-compose up -d'
                     """
                 }
             }
@@ -44,8 +37,8 @@ pipeline {
         stage('Verify Application') {
             steps {
                 sh """
-                    sleep 10
-                    curl -f http://${SERVER_IP}:8091
+                sleep 10
+                curl -f http://${SERVER_IP}:8091
                 """
             }
         }
@@ -62,7 +55,7 @@ pipeline {
 Job: ${env.JOB_NAME}
 Build: ${env.BUILD_NUMBER}
 
-Console:
+Console Output:
 ${env.BUILD_URL}console
 """,
                 attachLog: true
@@ -78,7 +71,7 @@ ${env.BUILD_URL}console
 Job: ${env.JOB_NAME}
 Build: ${env.BUILD_NUMBER}
 
-Console:
+Console Output:
 ${env.BUILD_URL}console
 """,
                 attachLog: true
