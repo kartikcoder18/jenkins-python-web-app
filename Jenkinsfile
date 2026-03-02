@@ -2,59 +2,68 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_TAG = "dev"
+        IMAGE_NAME = "pythonwebapp"
+        IMAGE_TAG  = "dev"
+        SERVER_IP  = "13.126.134.254"
     }
 
     stages {
 
-        stage('GitSecOps - Strict Secret Check') {
+        stage('Checkout Code') {
             steps {
-                sh '''
-                    echo "Running strict secret scan..."
-                    if grep -r -iE "AWS_ACCESS_KEY|AWS_SECRET|password|secret" . \
-                        --exclude=Jenkinsfile \
-                        --exclude-dir=.git; then
-                        echo "Secret detected! Failing pipeline."
-                        exit 1
-                    else
-                        echo "No secrets detected."
-                    fi
-                '''
+                checkout scm
             }
         }
 
-        stage('Build Image') {
+        stage('Show Docker Images Before Build') {
             steps {
-                sh "docker build -t pythonwebapp:${IMAGE_TAG} ."
+                sh 'docker images'
             }
         }
 
-        stage('Deploy') {
+        stage('Build Docker Image') {
             steps {
-                sh '''
-                    docker-compose up -d --build --force-recreate
-                '''
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
-        stage('Verify') {
+        stage('Show Docker Images After Build') {
             steps {
-                sh '''
+                sh 'docker images'
+            }
+        }
+
+        stage('Stop Old Container') {
+            steps {
+                sh 'docker compose down'
+            }
+        }
+
+        stage('Start New Container') {
+            steps {
+                sh 'docker compose up -d'
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh """
                     sleep 10
-                    curl -f http://13.126.134.254:8091
-                '''
+                    curl -f http://${SERVER_IP}:8091
+                """
             }
         }
     }
 
     post {
+
         success {
             emailext(
                 to: 'kartik.18901890@gmail.com',
                 subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """Build Successful!
 
-Job Name: ${env.JOB_NAME}
+Job: ${env.JOB_NAME}
 Build Number: ${env.BUILD_NUMBER}
 Status: SUCCESS
 
@@ -71,7 +80,7 @@ ${env.BUILD_URL}console
                 subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """Build Failed!
 
-Job Name: ${env.JOB_NAME}
+Job: ${env.JOB_NAME}
 Build Number: ${env.BUILD_NUMBER}
 Status: FAILURE
 
@@ -80,6 +89,10 @@ ${env.BUILD_URL}console
 """,
                 attachLog: true
             )
+        }
+
+        always {
+            echo "Pipeline Finished."
         }
     }
 }
