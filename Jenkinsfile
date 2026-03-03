@@ -15,7 +15,7 @@ pipeline {
             }
         }
 
-        stage('GitSecOps - Strict Secret Check') {
+        stage('GitSecOps') {
             steps {
                 sh '''
                     echo "Running strict secret scan..."
@@ -32,7 +32,7 @@ pipeline {
             }
         }
         
-        stage('Build Docker Image On EC2') {
+        stage('Build') {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
@@ -45,7 +45,7 @@ pipeline {
             }
         }
 
-        stage('Restart Containers Using Compose') {
+        stage('Containers Update') {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
@@ -60,7 +60,7 @@ pipeline {
             }
         }
 
-        stage('Verify Application') {
+        stage('Verify') {
             steps {
                 sh """
                 sleep 10
