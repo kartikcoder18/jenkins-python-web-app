@@ -15,6 +15,23 @@ pipeline {
             }
         }
 
+        stage('GitSecOps - Strict Secret Check') {
+            steps {
+                sh '''
+                    echo "Running strict secret scan..."
+
+                    if grep -r -iE "AWS_ACCESS_KEY|AWS_SECRET|password|secret" . \
+                        --exclude=Jenkinsfile \
+                        --exclude-dir=.git; then
+                        echo "Secret detected! Failing pipeline."
+                        exit 1
+                    else
+                        echo "No secrets detected."
+                    fi
+                '''
+            }
+        }
+        
         stage('Build Docker Image On EC2') {
             steps {
                 sshagent(['ec2-ssh-key']) {
