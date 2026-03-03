@@ -19,8 +19,10 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} \
-                    'cd ${APP_DIR} && docker build -t pythonwebapp:${IMAGE_TAG} .'
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} '
+                        cd ${APP_DIR} &&
+                        docker build -t pythonwebapp:${IMAGE_TAG} .
+                    '
                     """
                 }
             }
@@ -30,19 +32,12 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} \
-                    'cd ${APP_DIR} && IMAGE_TAG=${IMAGE_TAG} docker-compose down && IMAGE_TAG=${IMAGE_TAG} docker-compose up -d'
-                    """
-                }
-            }
-        }
-
-        stage('Show Running Containers On EC2') {
-            steps {
-                sshagent(['ec2-ssh-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} \
-                    'docker ps'
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} '
+                        cd ${APP_DIR} &&
+                        docker rm -f python-web-app || true &&
+                        IMAGE_TAG=${IMAGE_TAG} docker-compose down &&
+                        IMAGE_TAG=${IMAGE_TAG} docker-compose up -d
+                    '
                     """
                 }
             }
@@ -64,14 +59,7 @@ pipeline {
             emailext(
                 to: 'kartik.18901890@gmail.com',
                 subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """Build Successful
-
-Job: ${env.JOB_NAME}
-Build: ${env.BUILD_NUMBER}
-
-Console Output:
-${env.BUILD_URL}console
-""",
+                body: "Build Successful\n\n${env.BUILD_URL}console",
                 attachLog: true
             )
         }
@@ -80,20 +68,9 @@ ${env.BUILD_URL}console
             emailext(
                 to: 'kartik.18901890@gmail.com',
                 subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """Build Failed
-
-Job: ${env.JOB_NAME}
-Build: ${env.BUILD_NUMBER}
-
-Console Output:
-${env.BUILD_URL}console
-""",
+                body: "Build Failed\n\n${env.BUILD_URL}console",
                 attachLog: true
             )
-        }
-
-        always {
-            echo "Pipeline Finished."
         }
     }
 }
