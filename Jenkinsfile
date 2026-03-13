@@ -1,37 +1,25 @@
 pipeline {
     agent any
 
+    environment {
+        SERVER_IP = "35.154.70.112"
+        APP_DIR   = "/home/ubuntu/jenkins-python-web-app"
+        IMAGE_TAG = "latest"
+    }
+
     stages {
 
-        stage('Select Branch') {
+        stage('Checkout Code') {
             steps {
-                script {
-                    def userBranch = input(
-                        message: 'Enter Branch Name to Build',
-                        parameters: [
-                            string(
-                                name: 'BRANCH_NAME',
-                                defaultValue: 'main'
-                            )
-                        ]
-                    )
-                    env.BRANCH_NAME = userBranch
-                    env.IMAGE_TAG = userBranch
-                }
+                checkout scm
             }
         }
 
-        stage('Clone Code') {
-            steps {
-                git branch: "${env.BRANCH_NAME}",
-                    url: 'https://github.com/kartikcoder18/jenkins-python-web-app.git'
-            }
-        }
-
-        stage('GitSecOps - Strict Secret Check') {
+        stage('GitSecOps') {
             steps {
                 sh '''
                     echo "Running strict secret scan..."
+
                     if grep -r -iE "AWS_ACCESS_KEY|AWS_SECRET|password|secret" . \
                         --exclude=Jenkinsfile \
                         --exclude-dir=.git; then
@@ -43,33 +31,63 @@ pipeline {
                 '''
             }
         }
-
-        stage('Build Image') {
+        
+        stage('Build') {
             steps {
-                sh "docker build -t pythonwebapp:${env.IMAGE_TAG} ."
+                sshagent(['ec2-ssh-key']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} '
+                        cd ${APP_DIR} &&
+                        docker build -t pythonwebapp:${IMAGE_TAG} .
+                    '
+                    """
+                }
             }
         }
 
-        stage('Stop Old Container (Compose Down)') {
+        stage('Containers Update') {
             steps {
-                sh 'docker compose down || true'
-            }
-        }
-
-        stage('Deploy With Compose') {
-            steps {
-                sh '''
-                    export IMAGE_TAG=${IMAGE_TAG}
-                    docker compose up -d --build
-                '''
+                sshagent(['ec2-ssh-key']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} '
+                        cd ${APP_DIR} &&
+                        docker rm -f python-web-app || true &&
+                        IMAGE_TAG=${IMAGE_TAG} docker-compose down &&
+                        IMAGE_TAG=${IMAGE_TAG} docker-compose up -d
+                    '
+                    """
+                }
             }
         }
 
         stage('Verify') {
             steps {
-                sh 'sleep 5 && curl -f http://localhost:8091'
+                sh """
+                sleep 10
+                curl -f http://${SERVER_IP}:8091
+                """
             }
         }
+    }
 
+    post {
+
+        success {
+            emailext(
+                to: 'kartikkaistha6339@gmail.com',
+                subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Build Successful\n\n${env.BUILD_URL}console",
+                attachLog: true
+            )
+        }
+
+        failure {
+            emailext(
+                to: 'kartikkaistha6339@gmail.com',
+                subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Build Failed\n\n${env.BUILD_URL}console",
+                attachLog: true
+            )
+        }
     }
 }
