@@ -74,7 +74,7 @@ pipeline {
 
         success {
             emailext(
-                to: 'kartik.18901890@gmail.com',
+                to: 'kartikkaistha6339@gmail.com',
                 subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: "Build Successful\n\n${env.BUILD_URL}console",
                 attachLog: true
@@ -83,7 +83,7 @@ pipeline {
 
         failure {
             emailext(
-                to: 'kartik.18901890@gmail.com',
+                to: 'kartikkaistha6339@gmail.com',
                 subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: "Build Failed\n\n${env.BUILD_URL}console",
                 attachLog: true
