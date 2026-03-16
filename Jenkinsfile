@@ -32,18 +32,17 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('SonarCloud Analysis') {
             steps {
-                script {
-                    def scannerHome = tool 'sonar-scanner'
-                    withSonarQubeEnv('sonarqube-server') {
-                        sh """
-                        ${scannerHome}/bin/sonar-scanner \
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    sh """
+                        sonar-scanner \
                         -Dsonar.projectKey=python-web-app \
+                        -Dsonar.organization=kartikcoder18 \
                         -Dsonar.sources=. \
-                        -Dsonar.host.url=http://13.233.215.255:9000 \
-                        """
-                    }
+                        -Dsonar.host.url=https://sonarcloud.io \
+                        -Dsonar.login=$SONAR_TOKEN
+                    """
                 }
             }
         }
@@ -52,10 +51,10 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} '
-                        cd ${APP_DIR} &&
-                        docker build -t pythonwebapp:${IMAGE_TAG} .
-                    '
+                        ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} '
+                            cd ${APP_DIR} &&
+                            docker build -t pythonwebapp:${IMAGE_TAG} .
+                        '
                     """
                 }
             }
@@ -65,12 +64,12 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} '
-                        cd ${APP_DIR} &&
-                        docker rm -f python-web-app || true &&
-                        IMAGE_TAG=${IMAGE_TAG} docker-compose down &&
-                        IMAGE_TAG=${IMAGE_TAG} docker-compose up -d
-                    '
+                        ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} '
+                            cd ${APP_DIR} &&
+                            docker rm -f python-web-app || true &&
+                            IMAGE_TAG=${IMAGE_TAG} docker-compose down &&
+                            IMAGE_TAG=${IMAGE_TAG} docker-compose up -d
+                        '
                     """
                 }
             }
@@ -79,8 +78,8 @@ pipeline {
         stage('Verify') {
             steps {
                 sh """
-                sleep 10
-                curl -f http://${SERVER_IP}:8091
+                    sleep 10
+                    curl -f http://${SERVER_IP}:8091
                 """
             }
         }
