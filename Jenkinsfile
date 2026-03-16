@@ -31,19 +31,23 @@ pipeline {
                 '''
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube-server') {
-                    sh '''
-                        sonar-scanner \
+                script {
+                    def scannerHome = tool 'sonar-scanner'
+                    withSonarQubeEnv('sonarqube-server') {
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.projectKey=python-web-app \
                         -Dsonar.sources=. \
-                        -Dsonar.host.url=http://13.233.215.255:9000 \
-                        -Dsonar.login=$SONAR_AUTH_TOKEN
-                    '''
+                        -Dsonar.host.url=http://13.233.215.255:9000
+                        """
+                    }
                 }
             }
         }
+
         stage('Build') {
             steps {
                 sshagent(['ec2-ssh-key']) {
