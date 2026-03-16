@@ -42,7 +42,6 @@ pipeline {
                         -Dsonar.projectKey=python-web-app \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://13.233.215.255:9000 \
-                        -Dsonar.login=${SONAR_AUTH_TOKEN}
                         """
                     }
                 }
