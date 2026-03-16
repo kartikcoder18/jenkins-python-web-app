@@ -31,7 +31,19 @@ pipeline {
                 '''
             }
         }
-        
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube-server') {
+                    sh '''
+                        sonar-scanner \
+                        -Dsonar.projectKey=python-web-app \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://13.233.215.255:9000 \
+                        -Dsonar.login=$SONAR_AUTH_TOKEN
+                    '''
+                }
+            }
+        }
         stage('Build') {
             steps {
                 sshagent(['ec2-ssh-key']) {
