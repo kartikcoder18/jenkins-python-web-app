@@ -37,7 +37,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     sh '''
                         sonar-scanner \
-                        -Dsonar.projectKey=python-web-app \
+                        -Dsonar.projectKey=kartikcoder18_jenkins-python-web-app \
                         -Dsonar.organization=kartikcoder18 \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=https://sonarcloud.io \
