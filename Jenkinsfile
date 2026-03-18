@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SERVER_IP = "13.233.215.255"
+        SERVER_IP = "13.234.48.152"
         APP_DIR   = "/home/ubuntu/jenkins-python-web-app"
         IMAGE_TAG = "latest"
     }
